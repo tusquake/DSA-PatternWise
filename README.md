@@ -56,4 +56,8 @@ Fast membership testing, caching, deduplication.
 - **Load Balancing**: Consistent Hashing, Round Robin
 - **Job Queues**: Priority Queue, FIFO Queue
 - **Search**: Trie, Binary Search, Inverted Index
+<<<<<<< Updated upstream
 - **APIs**: Pagination (Binary Search), Throttling (Sliding Window)
+=======
+- **APIs**: Pagination (Binary Search), Throttling (Sliding Window)
+>>>>>>> Stashed changes
