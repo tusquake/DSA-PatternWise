@@ -287,7 +287,7 @@ But with 3 items, greedy gives optimal!
 
 ---
 
-## Interview Tips 💡
+## Interview Tips
 
 1. **Greedy choice explain karo clearly:** "Best value/weight ratio wale items pehle lenge kyunki per kg maximum value milegi"
 
@@ -308,7 +308,7 @@ But with 3 items, greedy gives optimal!
 
 ---
 
-## Common Mistakes ❌
+## Common Mistakes
 
 1. **Sort by value only:** Wrong! High value but heavy item wasteful ho sakta hai
 2. **Sort by weight only:** Wrong! Light but low value items useless
