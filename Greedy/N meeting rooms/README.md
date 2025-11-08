@@ -1,41 +1,48 @@
-Tum lemonade bech rahe ho aur **har lemonade ki price $5 hai**.
+# N Meetings in One Room - Interview Revision Notes
 
-Customers tumhe **$5, $10, ya $20** ki bills dete hain. Tumhe **correct change** wapas dena hai.
+## Problem Kya Hai?
 
-**Starting mein:** Tumhare paas koi change nahi hai (empty cash register)
+Tumhare paas **ek hi meeting room** hai aur **n meetings** schedule karni hain.
 
-**Goal:** Check karo ki **har customer ko correct change de sakte ho ya nahi**?
+Har meeting ka:
+- **Start time** hai
+- **End time** hai
+
+**Goal:** Maximum kitni meetings kar sakte ho ek room mein bina overlap kiye?
+
+**Note:** Ek time pe sirf **ek hi meeting** ho sakti hai room mein!
 
 ---
 
-## Solution - Greedy Approach
+## Solution - Activity Selection (Greedy)
 
 ### Code:
 ```java
 class Solution {
-    public boolean lemonadeChange(int[] bills) {
-        int f = 0, te = 0;  // f = $5 notes, te = $10 notes
-        for (int bill : bills) {
-            if (bill == 5) {
-                f++;
-            } 
-            else if (bill == 10) {
-                if (f == 0) return false;
-                f--;
-                te++;
-            } 
-            else {    // bill == 20
-                if (te > 0 && f > 0) { 
-                    te--;
-                    f--;
-                } else if (f >= 3) {
-                    f -= 3;
-                } else {
-                    return false;
-                }
+    public int maxMeetings(int start[], int end[], int n) {
+        // Step 1: Create array of pairs (meetings)
+        int[][] meetings = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            meetings[i][0] = start[i];  // start time
+            meetings[i][1] = end[i];    // end time
+        }
+        
+        // Step 2: Sort by end time
+        Arrays.sort(meetings, (a, b) -> a[1] - b[1]);
+        
+        // Step 3: Count maximum meetings
+        int count = 1;  // Pehli meeting toh hogi hi
+        int ansEnd = meetings[0][1];  // Last meeting ka end time
+        
+        for (int i = 1; i < n; i++) {
+            // Agar current meeting ka start > last meeting ka end
+            if (meetings[i][0] > ansEnd) {
+                count++;
+                ansEnd = meetings[i][1];  // Update end time
             }
         }
-        return true;
+        
+        return count;
     }
 }
 ```
@@ -44,176 +51,195 @@ class Solution {
 
 ## Step-by-Step Explanation
 
-### Variables Setup
-```java
-int f = 0;   // $5 notes ki count
-int te = 0;  // $10 notes ki count
-```
-
-**Note:** $20 notes ko track karne ki zarurat nahi kyunki woh change dene mein use nahi hoti!
-
----
-
-### Case 1: Customer Deta Hai $5 Bill
+### Step 1: Meetings Ko Store Karo
 
 ```java
-if (bill == 5) {
-    f++;
+int[][] meetings = new int[n][2];
+for (int i = 0; i < n; i++) {
+    meetings[i][0] = start[i];  // start time
+    meetings[i][1] = end[i];    // end time
 }
 ```
 
-**Logic:** Isme koi change nahi dena, seedha $5 note rakh lo cash register mein.
+**Logic:** Har meeting ke start aur end time ko ek saath rakhna hai taaki sorting ke baad bhi connection ban sake.
 
 **Example:**
-- Customer pays: $5
-- Change needed: $0
-- Action: `f++` (ab hamare paas ek $5 note hai)
+```
+start = [1, 3, 0, 5]
+end   = [2, 4, 6, 9]
 
----
-
-### Case 2: Customer Deta Hai $10 Bill
-
-```java
-else if (bill == 10) {
-    if (f == 0) return false;  // Agar $5 note nahi hai toh change nahi de sakte
-    f--;    // Ek $5 note change mein de diya
-    te++;   // $10 note rakh liya
-}
+meetings = [[1,2], [3,4], [0,6], [5,9]]
 ```
 
-**Logic:** 
-- Price: $5
-- Customer diya: $10
-- Change chahiye: **$5**
-- Agar hamare paas $5 note nahi hai → **return false** ❌
-- Warna: Ek $5 de do aur $10 rakh lo ✅
+---
 
-**Example:**
-- Customer pays: $10
-- Change needed: $5
-- Have $5 notes? YES → Give one, keep the $10
+### Step 2: Sort by End Time (CRITICAL!)
+
+```java
+Arrays.sort(meetings, (a, b) -> a[1] - b[1]);
+```
+
+**Logic:** Jo meeting **jaldi khatam** hogi, use **pehle** select karenge!
+
+**Why?** Kyunki jaldi khatam hone se baaki meetings ke liye zyada time bachega!
+
+**After sorting:**
+```
+meetings = [[1,2], [3,4], [0,6], [5,9]]
+```
+(Already sorted by end time in this example)
 
 ---
 
-### Case 3: Customer Deta Hai $20 Bill (TRICKY!)
+### Step 3: Greedy Selection
 
 ```java
-else {    // bill == 20
-    if (te > 0 && f > 0) {      // Strategy 1: Use 1×$10 + 1×$5
-        te--;
-        f--;
-    } else if (f >= 3) {         // Strategy 2: Use 3×$5
-        f -= 3;
-    } else {
-        return false;            // Change nahi de sakte
+int count = 1;  // Pehli meeting (jo sabse pehle end hoti hai) select kar li
+int ansEnd = meetings[0][1];  // Pehli meeting ka end time track karo
+```
+
+**Logic:** Sabse pehle ending wali meeting toh select karni hi karni hai! Starting count = 1
+
+---
+
+### Step 4: Remaining Meetings Check Karo
+
+```java
+for (int i = 1; i < n; i++) {
+    if (meetings[i][0] > ansEnd) {  // No overlap?
+        count++;
+        ansEnd = meetings[i][1];  // Update last meeting ka end time
     }
 }
 ```
 
-**Logic:** 
-- Price: $5
-- Customer diya: $20
-- Change chahiye: **$15**
+**Logic:**
+- Agar **current meeting ka start time** > **last selected meeting ka end time**
+- Matlab **no overlap** hai! ✅
+- Toh is meeting ko select karo aur count badhao
+- `ansEnd` update karo new meeting ke end time se
 
-**Two ways to give $15 change:**
-1. **1×$10 + 1×$5 = $15** (PREFER THIS!)
-2. **3×$5 = $15** (backup option)
-
-### Why Prefer Strategy 1?
-
-**$5 notes zyada valuable hain!** Kyunki:
-- $10 change dene mein sirf $5 use hota hai
-- $20 change dene mein bhi $5 chahiye
-- **$5 ko conserve karna smart move hai**
-
-**Example:**
-```
-bills = [5, 5, 10, 20]
-```
-- After [5,5,10]: f=1, te=1
-- For bill=20: Use 1×$10 + 1×$5 → f=0, te=0 ✅
-- Agar 3×$5 use karte toh f=-2 ho jata (FAIL!) ❌
+**Agar overlap hai?**
+- Simply skip karo (greedy choice - jo pehle khatam hui woh better hai)
 
 ---
 
 ## Dry Run Example
 
-**Input:** `bills = [5, 5, 10, 10, 20]`
+**Input:**
+```
+start = [1, 3, 0, 5, 8, 5]
+end   = [2, 4, 6, 7, 9, 9]
+```
 
-| Bill | Action | f | te | Status |
-|------|--------|---|----|----|
-| Start | - | 0 | 0 | - |
-| 5 | f++ | 1 | 0 | ✅ |
-| 5 | f++ | 2 | 0 | ✅ |
-| 10 | f--, te++ | 1 | 1 | ✅ (gave $5) |
-| 10 | f--, te++ | 0 | 2 | ✅ (gave $5) |
-| 20 | te--, f-- | ? | 1 | ❌ f=0, can't give change! |
+### Step 1: Create meetings array
+```
+meetings = [[1,2], [3,4], [0,6], [5,7], [8,9], [5,9]]
+```
 
-**Answer:** `false` - 5th customer ko change nahi de sakte!
+### Step 2: Sort by end time
+```
+meetings = [[1,2], [3,4], [0,6], [5,7], [8,9], [5,9]]
+                                  ↑ (sorted)
+Sorted:    [[1,2], [3,4], [0,6], [5,7], [8,9], [5,9]]
+```
+
+### Step 3 & 4: Select meetings
+
+| i | Meeting | Start | End | ansEnd | Start > ansEnd? | Action |
+|---|---------|-------|-----|--------|-----------------|--------|
+| 0 | [1,2] | 1 | 2 | 2 | - | Selected (count=1) |
+| 1 | [3,4] | 3 | 4 | 2 | 3 > 2 ✅ | Selected (count=2, ansEnd=4) |
+| 2 | [0,6] | 0 | 6 | 4 | 0 > 4 ❌ | Skip (overlap) |
+| 3 | [5,7] | 5 | 7 | 4 | 5 > 4 ✅ | Selected (count=3, ansEnd=7) |
+| 4 | [8,9] | 8 | 9 | 7 | 8 > 7 ✅ | Selected (count=4, ansEnd=9) |
+| 5 | [5,9] | 5 | 9 | 9 | 5 > 9 ❌ | Skip (overlap) |
+
+**Answer:** `count = 4` meetings! 🎉
+
+**Selected meetings:** [1,2], [3,4], [5,7], [8,9]
 
 ---
 
-## Another Example (Success Case)
+## Visual Timeline
 
-**Input:** `bills = [5, 5, 5, 10, 20]`
-
-| Bill | Action | f | te | Status |
-|------|--------|---|----|----|
-| Start | - | 0 | 0 | - |
-| 5 | f++ | 1 | 0 | ✅ |
-| 5 | f++ | 2 | 0 | ✅ |
-| 5 | f++ | 3 | 0 | ✅ |
-| 10 | f--, te++ | 2 | 1 | ✅ (gave $5) |
-| 20 | te--, f-- | 1 | 0 | ✅ (gave $10+$5) |
-
-**Answer:** `true` - Sab customers ko change mil gaya!
+```
+Time:    0  1  2  3  4  5  6  7  8  9
+         |--|--|--|--|--|--|--|--|--|
+[1,2]       ✅✅                         Selected
+[3,4]             ✅✅                   Selected
+[0,6]    ❌❌❌❌❌❌❌                 Overlaps with [1,2]
+[5,7]                   ✅✅✅           Selected
+[8,9]                          ✅✅      Selected
+[5,9]                   ❌❌❌❌❌      Overlaps with [5,7]
+```
 
 ---
 
 ## Why Greedy Works Here?
 
-Greedy choice hai: **$20 ke liye pehle 1×$10 + 1×$5 use karo, then 3×$5**
+**Greedy Choice:** Jo meeting **sabse jaldi khatam** ho rahi hai, use select karo
 
-**Reason:** 
-- $5 notes universal hain (har change mein use ho sakte hain)
-- $10 notes limited use ke hain (sirf $20 change mein)
-- $5 ko save karna = future customers ko bhi change de payenge
+**Proof:**
+1. Agar hum koi aur meeting select karte (jo late end hoti)
+2. Toh baaki meetings ke liye kam time bachta
+3. Result: Kam meetings ho paati
+
+**Example:**
+```
+Meeting A: [1, 5]
+Meeting B: [1, 3]
+Meeting C: [4, 6]
+
+Agar A select kiya → C nahi ho sakti (overlap)
+Agar B select kiya → C bhi ho sakti hai! (B pehle end hoti hai)
+```
+
+**Conclusion:** Jo **jaldi khatam** ho, woh **optimal** hai!
 
 ---
 
 ## Complexity Analysis
 
-- **Time Complexity:** `O(n)` 
-  - Bas ek loop chalaya hai array pe
-  
-- **Space Complexity:** `O(1)` 
-  - Sirf 2 variables use kiye (f, te)
+- **Time Complexity:** `O(n log n)`
+    - Sorting: `O(n log n)`
+    - Loop: `O(n)`
+    - Total: `O(n log n)` (sorting dominates)
+
+- **Space Complexity:** `O(n)`
+    - 2D array banaya meetings store karne ke liye
 
 ---
 
 ## Edge Cases
 
-1. **Pehla customer hi $10 ya $20 deta hai:**
+1. **Ek hi meeting:**
    ```
-   bills = [10, 5, 5]
+   start = [1], end = [2]
    ```
-   → Pehle customer ko change nahi de sakte → `false`
+   → Answer: `1` ✅
 
-2. **Saare customers $5 dete hain:**
+2. **Koi bhi meeting overlap nahi:**
    ```
-   bills = [5, 5, 5, 5]
+   start = [1, 3, 5]
+   end   = [2, 4, 6]
    ```
-   → Kisi ko change nahi dena → `true`
+   → Answer: `3` (sabhi select ho jayengi) ✅
 
-3. **$20 ke liye sirf 3×$5 option hai:**
+3. **Sab meetings same time:**
    ```
-   bills = [5, 5, 5, 5, 20]
+   start = [1, 1, 1]
+   end   = [2, 2, 2]
    ```
-   → f=4, use 3×$5 → f=1 → `true`
+   → Answer: `1` (sirf ek hi ho sakti hai) ✅
 
+4. **Nested meetings:**
+   ```
+   start = [1, 2, 3]
+   end   = [10, 5, 4]
+   ```
+   → Sort by end: [[3,4], [2,5], [1,10]]
+   → Answer: `2` ([3,4] and [2,5] but wait... overlap!)
+   → Actually: `1` (sirf [3,4]) ✅
 
 ---
-
-**Greedy strategy:** Jo resource zyada versatile hai (like $5 notes), use conserve karo!
-
-Simple simulation problem hai - bas track karo kitne notes hai aur har transaction pe check karo ki change de sakte ho ya nahi!
