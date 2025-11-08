@@ -1,7 +1,3 @@
-# Fractional Knapsack Problem - Interview Revision Notes 🎒
-
-## Problem Kya Hai?
-
 Tumhare paas:
 - **Ek knapsack (bag)** hai jiska **maximum capacity W** hai
 - **n items** hain, har item ka:
