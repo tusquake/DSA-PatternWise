@@ -317,13 +317,3 @@ But with 3 items, greedy gives optimal!
 5. **0/1 Knapsack samjhna:** Fractional mein greedy works, 0/1 mein DP chahiye
 
 ---
-
-## Key Takeaway
-
-**Greedy Strategy:** Best **value/weight ratio** wale items pehle lo!
-
-**Formula:** `ratio = value / weight` (per unit weight ki value)
-
-Sort by ratio → Fill greedily → Maximum value milega! 💰
-
-Ye classic greedy problem hai aur interview mein 0/1 Knapsack ke comparison mein pucha jata hai! 🔥
