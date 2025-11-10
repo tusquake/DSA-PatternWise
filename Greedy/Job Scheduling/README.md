@@ -1,26 +1,33 @@
-Tumhe ek array diya gaya hai jisme **har index pe ek number** hai.
+Tumhare paas n jobs hain. Har job ka:
+- **id** - Job ka unique identifier
+- **deadline** - Kitne din mein complete karna hai
+- **profit** - Job complete karne pe kitna profit milega
 
-Tum **index 0 se start** karte ho aur **last index tak** pahunchna hai.
+**Rules:**
+- Har job ko complete hone mein **1 unit time** lagta hai
+- Ek time pe sirf **ek job** kar sakte ho
+- Job ko uski **deadline se pehle ya deadline pe** complete karna hai
 
-Har index pe jo number hai, woh **maximum kitne steps jump kar sakte ho** woh batata hai.
-
-**Goal:** Check karo ki last index tak **pahunch sakte ho ya nahi**?
+**Goal:** Maximum profit kaise kamaya jaye aur kitni jobs complete hongi?
 
 ---
 
 ## Example
 
 ```
-nums = [2, 3, 1, 1, 4]
-Index:  0  1  2  3  4
+Jobs:
+Job 1: deadline=4, profit=20
+Job 2: deadline=1, profit=10
+Job 3: deadline=1, profit=40
+Job 4: deadline=1, profit=30
 ```
 
-**Explanation:**
-- Index 0 pe ho → nums[0] = 2 → Max 2 steps jump kar sakte ho
-- Jump to index 1 or 2
-- Index 1 pe → nums[1] = 3 → Max 3 steps jump kar sakte ho
-- Jump to index 2, 3, or 4 ✅
-- **Last index (4) tak pahunch gaye!** ✅
+**Optimal Solution:**
+- Day 1: Job 3 karo (profit=40, deadline=1)
+- Day 2: Job 1 karo (profit=20, deadline=4)
+- Job 2 aur Job 4 skip (kyunki deadline 1 thi aur slot occupied hai)
+
+**Answer:** 2 jobs, Total profit = 60
 
 ---
 
@@ -29,278 +36,425 @@ Index:  0  1  2  3  4
 ### Code (Java):
 ```java
 class Solution {
-    public boolean canJump(int[] nums) {
-        int farthest = 0;  // Ab tak kitna door ja sakte hain
+    int[] JobScheduling(Job arr[], int n) {
+        // Step 1: Sort by profit (descending - highest profit first)
+        Arrays.sort(arr, (a, b) -> b.profit - a.profit);
         
-        for (int i = 0; i < nums.length; i++) {
-            // Agar current index tak nahi pahunch sakte
-            if (farthest < i) {
-                return false;  // Stuck ho gaye!
+        // Step 2: Track which time slots are occupied
+        boolean[] done = new boolean[n];
+        
+        // Step 3: Schedule jobs greedily
+        int jobCount = 0;
+        int totalProfit = 0;
+        
+        for (int i = 0; i < n; i++) {
+            // Try to schedule job as late as possible before deadline
+            for (int j = Math.min(n - 1, arr[i].dead - 1); j >= 0; j--) {
+                if (!done[j]) {
+                    // Slot available, schedule this job
+                    jobCount++;
+                    totalProfit += arr[i].profit;
+                    done[j] = true;
+                    break;
+                }
             }
-            
-            // Update farthest position
-            farthest = Math.max(farthest, nums[i] + i);
         }
         
-        return true;  // Last tak pahunch gaye!
+        return new int[]{jobCount, totalProfit};
     }
 }
 ```
 
 ### Code (C++):
 ```cpp
-bool canJump(vector<int>& nums) {
-    int farthest = 0;
-    
-    for (int i = 0; i < nums.size(); i++) {
-        if (farthest < i)
-            return false;
-        farthest = max(farthest, nums[i] + i);
+class Solution {
+    public:
+    static bool comp(Job a, Job b) {
+        return a.profit > b.profit;
     }
     
-    return true;
-}
+    vector<int> JobScheduling(Job arr[], int n) {
+        // Sort by profit (highest first)
+        sort(arr, arr+n, comp);
+        
+        // Track occupied slots
+        bool done[n] = {0};
+        
+        int day = 0, profit = 0;
+        
+        for (int i = 0; i < n; i++) {
+            // Try to fit job in latest possible slot before deadline
+            for (int j = min(n, arr[i].dead - 1); j >= 0; j--) {
+                if (done[j] == false) {
+                    day += 1;
+                    profit += arr[i].profit;
+                    done[j] = true;
+                    break;
+                }
+            }
+        }
+        
+        return {day, profit};
+    }
+};
 ```
 
 ---
 
 ## Step-by-Step Explanation
 
-### Variable Setup
+### Step 1: Sort by Profit (Descending Order)
+
 ```java
-int farthest = 0;  // Ab tak maximum kitna door jump kar sakte hain
+Arrays.sort(arr, (a, b) -> b.profit - a.profit);
 ```
 
-**Logic:** Ye track karega ki tumhare current position se **maximum kahan tak pahunch sakte ho**.
+**Logic:** Idhr aisa krenge toh sabse zyada profit wali job pehle schedule karenge. Greedy choice hai - maximize profit.
+
+**Real-world analogy:** Agar tumhe multiple freelance projects mile hain, toh sabse zyada payment wala project pehle complete karoge.
+
+**Example:**
+```
+Before sorting:
+Job 1: deadline=4, profit=20
+Job 2: deadline=1, profit=10
+Job 3: deadline=1, profit=40
+Job 4: deadline=1, profit=30
+
+After sorting by profit:
+Job 3: deadline=1, profit=40  (highest)
+Job 4: deadline=1, profit=30
+Job 1: deadline=4, profit=20
+Job 2: deadline=1, profit=10  (lowest)
+```
 
 ---
 
-### Main Loop Logic
+### Step 2: Track Occupied Time Slots
 
 ```java
-for (int i = 0; i < nums.length; i++) {
-    if (farthest < i) {
-        return false;  // Current index tak hi nahi pahunch sakte!
+boolean[] done = new boolean[n];
+```
+
+**Logic:** Idhr aisa krenge toh har time slot ko track karenge - occupied hai ya free.
+
+**Array indexing:**
+- `done[0]` = Day 1 ka slot
+- `done[1]` = Day 2 ka slot
+- `done[j]` = Day (j+1) ka slot
+
+**Real-world analogy:** Calendar jaisa - har din pe ek hi job schedule kar sakte ho.
+
+---
+
+### Step 3: Schedule Jobs Greedily
+
+```java
+for (int i = 0; i < n; i++) {
+    // Try to schedule job as late as possible before deadline
+    for (int j = Math.min(n - 1, arr[i].dead - 1); j >= 0; j--) {
+        if (!done[j]) {
+            jobCount++;
+            totalProfit += arr[i].profit;
+            done[j] = true;
+            break;
+        }
     }
-    
-    farthest = Math.max(farthest, nums[i] + i);
 }
 ```
 
-### Check 1: Kya Current Index Reachable Hai?
+**Outer Loop:** Har job ko consider karo (profit order mein)
+
+**Inner Loop:** Job ko deadline se pehle **latest possible slot** mein fit karo
+
+---
+
+### Why Latest Possible Slot?
+
 ```java
-if (farthest < i) {
-    return false;
+for (int j = Math.min(n - 1, arr[i].dead - 1); j >= 0; j--)
+```
+
+**Logic:** Idhr aisa krenge toh job ko deadline ke jitna paas ho sake schedule karenge, taaki early slots baaki jobs ke liye available rahein.
+
+**Example:**
+```
+Job: deadline=4, profit=50
+
+Slots available: [0, 1, 2, 3] (Days 1, 2, 3, 4)
+
+Try: slot 3 (Day 4) → Available? Yes! Schedule here
+Why? Kyunki Day 1, 2, 3 ab baaki jobs ke liye free hain
+```
+
+**Real-world analogy:** Assignment submission jaisa - agar deadline 5 days hai, toh 5th day ko submit karoge taaki baaki kaam bhi kar sako.
+
+---
+
+### Breaking Down the Inner Loop
+
+```java
+for (int j = Math.min(n - 1, arr[i].dead - 1); j >= 0; j--)
+```
+
+**Starting point:** `min(n-1, arr[i].dead - 1)`
+- `arr[i].dead - 1` = Job ki deadline se ek din pehle (0-indexed)
+- `n - 1` = Maximum possible slot
+- Dono mein se chhota wala lo
+
+**Why min?**
+- Agar deadline = 10 but sirf 5 jobs hain
+- Toh slot 9 kaam ka nahi (out of bounds)
+- Isliye min(4, 9) = 4
+
+**Direction:** `j >= 0` (right to left, deadline se backwards)
+- Latest slot se start karo
+- Pehla free slot mila toh schedule kar do
+
+---
+
+### Scheduling Logic
+
+```java
+if (!done[j]) {
+    jobCount++;
+    totalProfit += arr[i].profit;
+    done[j] = true;
+    break;
 }
 ```
 
-**Logic:** 
-- Agar `farthest < i` matlab current index `i` tak **pahunch hi nahi sakte**
-- Matlab beech mein **stuck** ho gaye
-- Directly `false` return karo ❌
+**Agar slot free hai:**
+1. Job count badhao
+2. Profit add karo
+3. Slot ko occupied mark karo
+4. Break - is job ka kaam ho gaya
 
-**Example:**
-```
-nums = [1, 0, 1, 0]
-Index:  0  1  2  3
-
-i=0: farthest = 0+1 = 1
-i=1: farthest = max(1, 1+0) = 1
-i=2: farthest (1) < i (2) → STUCK! Return false ❌
-```
+**Agar koi slot nahi mila?** Job skip ho jayegi (profit nahi milega)
 
 ---
 
-### Update Farthest Position
-```java
-farthest = Math.max(farthest, nums[i] + i);
+## Dry Run Example
+
+**Input:**
+```
+Job A: deadline=4, profit=20
+Job B: deadline=1, profit=10
+Job C: deadline=1, profit=40
+Job D: deadline=1, profit=30
 ```
 
-**Logic:**
-- Current index `i` se tum **maximum `nums[i]` steps** jump kar sakte ho
-- Toh tum **index `i + nums[i]` tak** pahunch sakte ho
-- **Farthest** ko update karo: jo bhi zyada ho, woh rakh lo
-
-**Formula:** `new_position = current_index + jump_power`
-
-**Example:**
+### Step 1: Sort by profit
 ```
-i = 2, nums[2] = 5
-Current position: 2
-Jump power: 5
-Farthest reach: 2 + 5 = 7
+Job C: deadline=1, profit=40
+Job D: deadline=1, profit=30
+Job A: deadline=4, profit=20
+Job B: deadline=1, profit=10
 ```
+
+### Step 2: Initialize
+```
+done = [false, false, false, false]  (4 slots: Day 1, 2, 3, 4)
+jobCount = 0, totalProfit = 0
+```
+
+### Step 3: Process jobs
+
+**Job C (deadline=1, profit=40):**
+```
+Try slots: min(3, 1-1) = 0 to 0
+j=0: done[0]=false → Schedule here!
+done = [true, false, false, false]
+jobCount = 1, totalProfit = 40
+```
+
+**Job D (deadline=1, profit=30):**
+```
+Try slots: min(3, 1-1) = 0 to 0
+j=0: done[0]=true → Occupied!
+No slot available → Skip this job
+done = [true, false, false, false]
+jobCount = 1, totalProfit = 40
+```
+
+**Job A (deadline=4, profit=20):**
+```
+Try slots: min(3, 4-1) = 3 to 0
+j=3: done[3]=false → Schedule here!
+done = [true, false, false, true]
+jobCount = 2, totalProfit = 60
+```
+
+**Job B (deadline=1, profit=10):**
+```
+Try slots: min(3, 1-1) = 0 to 0
+j=0: done[0]=true → Occupied!
+No slot available → Skip this job
+done = [true, false, false, true]
+jobCount = 2, totalProfit = 60
+```
+
+**Final Answer:** [2, 60]
+- 2 jobs completed
+- Total profit = 60
 
 ---
 
-## Dry Run Example 1 (Success Case)
+## Visual Timeline
 
-**Input:** `nums = [2, 3, 1, 1, 4]`
-
-| i | nums[i] | farthest (before) | i + nums[i] | farthest < i? | farthest (after) | Notes |
-|---|---------|-------------------|-------------|---------------|------------------|-------|
-| 0 | 2 | 0 | 0+2=2 | 0<0? ❌ | max(0,2)=2 | Can reach index 2 |
-| 1 | 3 | 2 | 1+3=4 | 2<1? ❌ | max(2,4)=4 | Can reach index 4! |
-| 2 | 1 | 4 | 2+1=3 | 4<2? ❌ | max(4,3)=4 | Still 4 |
-| 3 | 1 | 4 | 3+1=4 | 4<3? ❌ | max(4,4)=4 | Still 4 |
-| 4 | 4 | 4 | 4+4=8 | 4<4? ❌ | max(4,8)=8 | Last index! |
-
-**Loop ends → Return `true`** ✅
-
-**Explanation:** 
-- Index 1 se hi last index (4) tak pahunch sakte the!
-- `farthest` kabhi bhi current index se peeche nahi raha
-
----
-
-## Dry Run Example 2 (Failure Case)
-
-**Input:** `nums = [3, 2, 1, 0, 4]`
-
-| i | nums[i] | farthest (before) | i + nums[i] | farthest < i? | farthest (after) | Notes |
-|---|---------|-------------------|-------------|---------------|------------------|-------|
-| 0 | 3 | 0 | 0+3=3 | 0<0? ❌ | max(0,3)=3 | Can reach index 3 |
-| 1 | 2 | 3 | 1+2=3 | 3<1? ❌ | max(3,3)=3 | Still 3 |
-| 2 | 1 | 3 | 2+1=3 | 3<2? ❌ | max(3,3)=3 | Still 3 |
-| 3 | 0 | 3 | 3+0=3 | 3<3? ❌ | max(3,3)=3 | Can't go further! |
-| 4 | 4 | 3 | - | **3<4? ✅** | - | **STUCK!** |
-
-**Return `false` at i=4** ❌
-
-**Explanation:**
-- Index 3 pe **0** hai → aage jump nahi kar sakte
-- Index 4 tak pahunchna impossible!
-- `farthest` (3) < current index (4)
-
----
-
-## Visual Representation
-
-### Success Case:
 ```
-nums = [2, 3, 1, 1, 4]
-Index:  0  1  2  3  4
+Days:     1     2     3     4
+Slots:   [0]   [1]   [2]   [3]
 
-Step 0: [●]──────────────  farthest = 2
-        Can reach: 0,1,2
+Job C (dl=1, p=40): ████ at Day 1 [slot 0]
+Job D (dl=1, p=30): ❌ No slot (Day 1 occupied)
+Job A (dl=4, p=20):                   ████ at Day 4 [slot 3]
+Job B (dl=1, p=10): ❌ No slot (Day 1 occupied)
 
-Step 1:  0 [●]────────────  farthest = 4
-           Can reach: 0,1,2,3,4 ✅ (GOAL REACHED!)
+Final Schedule:
+Day 1: Job C (profit=40)
+Day 2: Free
+Day 3: Free
+Day 4: Job A (profit=20)
 
-✅ Last index reachable!
-```
-
-### Failure Case:
-```
-nums = [3, 2, 1, 0, 4]
-Index:  0  1  2  3  4
-
-Step 0: [●]──────────────  farthest = 3
-        Can reach: 0,1,2,3
-
-Step 3:  0  1  2 [●] | 4   farthest = 3
-                 WALL! Can't cross!
-
-❌ Last index NOT reachable!
+Total: 2 jobs, 60 profit
 ```
 
 ---
 
 ## Why Greedy Works Here?
 
-**Greedy Choice:** Har step pe **maximum reach** track karo, agar stuck ho toh false, warna continue!
+**Greedy Choice:** Sabse zyada profit wali job pehle schedule karo, deadline ke paas wale slot mein.
 
 **Why optimal?**
-- Tumhe actual path find karne ki zarurat nahi
-- Bas ye check karna hai ki **reachable hai ya nahi**
-- Agar kisi bhi index se last tak pahunch sakte ho → answer YES
-- Agar beech mein stuck ho gaye → answer NO
+1. High profit jobs ko priority do
+2. Late slots use karo taaki early slots available rahein
+3. Low profit jobs automatically filter out ho jayengi agar slots na mile
 
-**Key insight:** Tumhe best path choose nahi karna, bas **feasibility check** karna hai! 🎯
+**Proof by contradiction:**
+- Agar low profit job ko pehle schedule karoge
+- Toh high profit job ke liye slot nahi milega
+- Total profit kam ho jayega
+
+**Real-world analogy:** Company mein important projects pehle complete karte hain, less important baad mein ya skip kar dete hain.
 
 ---
 
 ## Complexity Analysis
 
-- **Time Complexity:** `O(n)` 
-  - Single pass through array
-  - Har element ko ek baar visit kiya
-  
-- **Space Complexity:** `O(1)` 
-  - Sirf ek variable `farthest` use kiya
-  - No extra space needed!
+- **Time Complexity:** `O(n^2)`
+    - Sorting: O(n log n)
+    - Outer loop: O(n)
+    - Inner loop: O(n) worst case (har job ke liye n slots check)
+    - Total: O(n^2)
+
+- **Space Complexity:** `O(n)`
+    - done[] array for tracking slots
+
+**Optimization possible:** Disjoint Set Union (DSU) use karke O(n log n) mein kar sakte ho, but complexity badhta hai.
 
 ---
 
 ## Edge Cases
 
-1. **Single element:**
+1. **Single job:**
    ```
-   nums = [0]
+   Job 1: deadline=1, profit=100
    ```
-   → Already at last index → `true` ✅
+   → Answer: [1, 100]
 
-2. **First element is 0:**
+2. **All jobs same deadline:**
    ```
-   nums = [0, 1, 2]
+   Job 1: deadline=1, profit=20
+   Job 2: deadline=1, profit=30
+   Job 3: deadline=1, profit=40
    ```
-   → Can't move from index 0 → `false` ❌
+   → Only highest profit job (Job 3) scheduled → [1, 40]
 
-3. **All zeros except first:**
+3. **No deadline constraint (all deadlines >= n):**
    ```
-   nums = [1, 0, 0, 0]
+   3 jobs, all deadlines = 5
    ```
-   → Can only reach index 1 → `false` (if n>2) ❌
+   → Sab jobs schedule ho jayengi
 
-4. **Large jumps:**
+4. **Zero profit jobs:**
    ```
-   nums = [10, 0, 0, 0, 0]
+   Job 1: deadline=2, profit=0
    ```
-   → First jump covers everything → `true` ✅
+   → Still count hoga but profit 0
 
-5. **Already at destination:**
+5. **Large deadlines:**
    ```
-   nums = [5] (single element)
+   Job 1: deadline=100, profit=50
+   But only 3 jobs total
    ```
-   → `true` ✅
+   → min(n-1, deadline-1) = min(2, 99) = 2 (slot 2 use hoga)
 
 ---
 
-## Interview Tips 💡
+## Interview Tips
 
-1. **Greedy vs DP mention karo:**
-   - Greedy: O(n) time, O(1) space ✅
-   - DP/BFS: O(n²) time, O(n) space (overkill!)
+1. **Sorting strategy explain karo:** "Idhr aisa krenge toh sabse zyada profit wali jobs pehle consider karenge, greedy approach hai"
 
-2. **Key insight explain karo:** "Hume actual jumps nahi chahiye, bas check karna hai ki reachable hai ya nahi. Isliye maximum reach track karna kaafi hai."
+2. **Latest slot logic:** "Job ko deadline ke jitna paas schedule karenge taaki early slots baaki jobs ke liye free rahein"
 
-3. **Visualization:** "Imagine a rope that extends as we move - if rope breaks (farthest < i), we can't proceed."
+3. **Array indexing:** "done[j] array mein j=0 means Day 1, j=1 means Day 2 (0-indexed)"
 
-4. **Alternative approach:** BFS/DFS possible but unnecessary complexity
+4. **Time complexity trade-off:** "O(n^2) solution simple hai, DSU se O(n log n) possible but implementation complex"
 
-5. **Follow-up questions:**
-   - Minimum jumps chahiye? (Jump Game II - different problem, DP needed)
-   - Print the path? (Need to track actual jumps, backtracking)
-   - Multiple starting points? (Run algorithm from each point)
+5. **Alternative approaches:**
+    - Disjoint Set Union (DSU): Find next available slot efficiently
+    - Priority Queue: Different approach, similar complexity
+    - Dynamic Programming: Overkill for this problem
 
-6. **Edge case mention karo:** First element 0 hai toh directly false
-
----
-
-## Related Problems
-
-1. **Jump Game II:** Minimum jumps needed (harder, needs DP or greedy with BFS)
-2. **Jump Game III:** Can reach value 0? (DFS/BFS)
-3. **Jump Game IV:** Jump to same values (Graph problem)
+6. **Follow-up questions:**
+    - Jobs ko actual schedule bhi return karna hai? (Track job IDs in done array)
+    - Multiple machines available hain? (Different problem - parallel job scheduling)
+    - Dependencies between jobs? (Topological sort needed)
 
 ---
 
-## Common Mistakes ❌
+## Common Mistakes
 
-1. **DP use karna:** Overkill hai, greedy sufficient hai
-2. **Actual path track karna:** Problem sirf YES/NO puchta hai
-3. **farthest update bhulna:** Har step pe update karna zaruri
-4. **Index out of bounds:** Loop condition check karo properly
-5. **Return statement placement:** Loop ke andar check karo (early termination)
+1. **Sorting by deadline:** Wrong! Profit se sort karna hai, deadline constraint baad mein check karni hai
+
+2. **Earliest slot choose karna:** Wrong! Latest available slot choose karo taaki flexibility rahe
+
+3. **Array size:** done[n] size enough hai usually, but agar max deadline > n toh problem ho sakti hai
+
+4. **Index confusion:** deadline=1 means slot 0 (0-indexed), deadline=4 means slot 3
+
+5. **Break statement bhulna:** Ek slot mila toh break karo, warna duplicate counting ho jayegi
+
+6. **min() function purpose:** Deadline aur array bounds dono check karne ke liye
 
 ---
+
+## Real-World Applications
+
+1. **Task scheduling in OS:** High priority tasks pehle schedule karo
+
+2. **Project management:** High profit projects deadline se pehle complete karo
+
+3. **Resource allocation:** Limited resources ko maximum profit ke liye use karo
+
+4. **Interview scheduling:** Multiple candidates, limited time slots
+
+5. **Delivery scheduling:** High value orders pehle deliver karo
+
+---
+
+## Key Takeaway
+
+**Greedy Strategy:** Sort by profit (highest first), schedule in latest available slot before deadline.
+
+**Core Logic:**
+```
+1. Sort jobs by profit (descending)
+2. For each job (highest profit first):
+   - Try to fit in latest slot before deadline
+   - If slot found: schedule and mark occupied
+   - Else: skip this job
+3. Return jobs count and total profit
+```
+
