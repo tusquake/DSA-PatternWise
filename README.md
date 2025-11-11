@@ -257,4 +257,4 @@ Backend development mein ye patterns repeatedly aate hain. Har pattern ka:
 - Practical use cases yaad rakho
 - Trade-offs understand karo
 
-Interview mein problem solving approach clear honi chahiye - brute force se start karo, optimize karo, best solution tak pahuncho.
+
