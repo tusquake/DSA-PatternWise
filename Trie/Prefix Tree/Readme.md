@@ -1,5 +1,3 @@
-# Implement Trie (Prefix Tree) - Interview Revision Notes
-
 ## Problem Kya Hai?
 
 **Trie (Prefix Tree)** implement karna hai jo teen operations support kare:
