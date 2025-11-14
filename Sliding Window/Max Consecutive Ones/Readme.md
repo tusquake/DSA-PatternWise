@@ -17,7 +17,7 @@ Output: 6
 
 Explanation:
 Original:  [1,1,1,0,0,0,1,1,1,1,0]
-Flip 2 zeros:     ↑ ↑ (flip these two)
+Flip 2 zeros:       ↑ ↑ (flip these two)
 Result:    [1,1,1,0,0,1,1,1,1,1,1]
                      └────────┘
                    6 consecutive 1's
@@ -346,7 +346,7 @@ i=5:    [1 1 1 0 0 0]        zeros=3 ❌ Shrink!
 i=6:    [0 0 1]              zeros=2 ✅ length=3
 i=7:    [0 0 1 1]            zeros=2 ✅ length=4
 i=8:    [0 0 1 1 1]          zeros=2 ✅ length=5
-i=9:    [0 0 1 1 1 1]        zeros=2 ✅ length=6 🎯 MAX!
+i=9:    [0 0 1 1 1 1]        zeros=2 ✅ length=6  MAX!
 i=10:   [0 0 1 1 1 1 0]      zeros=3 ❌ Shrink!
         Shrink → [0 1 1 1 1 0] zeros=2 ✅ length=6
 
@@ -542,5 +542,3 @@ Shrink until valid again
 window_length = i - start + 1
 valid = zeros in window <= k
 ```
-
-Classic sliding window problem - interview mein bahut common hai especially for binary array questions!
